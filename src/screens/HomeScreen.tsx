@@ -1,27 +1,39 @@
 // ** React native import
-import { Text, View, StyleSheet, Button } from 'react-native';
+import { Text, View, StyleSheet, Button, FlatList } from 'react-native';
 
 // ** React imports
-import { FC } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteParams } from '../navigation/RootNavigator';
-import { useUser } from '../context/User';
+import { FC, useEffect, useState } from 'react';
+import { User, useUser } from '../context/User';
+import UserCard from '../components/UserCard';
 
 interface HomeScreenProps {}
 
 const HomeScreen: FC<HomeScreenProps> = () => {
-  const { navigate } = useNavigation<NativeStackNavigationProp<RouteParams>>();
   const { disconnect } = useUser();
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    fetch('https://jsonplaceholder.typicode.com/users')
+      .then((res) => res.json())
+      .then((data: User[]) => setUsers(data))
+      .catch((e: Error) => console.error(e));
+  }, []);
+
+  const deleteUser = (id: number) => {
+    setUsers((old) => old.filter((u) => u.id !== id));
+  };
 
   return (
-    <View>
-      <Text>this is a homePageText</Text>
-      <Button
-        title="Sign Up"
-        onPress={() => {
-          disconnect();
-        }}
+    <View style={styles.container}>
+      <Text style={styles.text}>
+        Welcome admin{' '}
+        <Button title="deconnexion" onPress={() => disconnect()} />
+      </Text>
+      <FlatList
+        data={users}
+        renderItem={({ item }) => (
+          <UserCard user={item} deleteUser={deleteUser} />
+        )}
       />
     </View>
   );
@@ -34,5 +46,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  text: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
 });
